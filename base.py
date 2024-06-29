@@ -188,7 +188,8 @@ class ComposeGenerator:
         port = 5000
 
         config = {
-            "http": {"addr": "0.0.0.0:{port}"},
+            "version": "0.1",
+            "http": {"addr": f"0.0.0.0:{port}"},
             "storage": {"filesystem": {"rootdirectory": "/var/lib/registry"}},
             "proxy": {"remoteurl": f"https://{upstream}"},
         }
