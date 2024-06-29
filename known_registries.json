@@ -1,0 +1,81 @@
+[
+  {
+    "name": "docker",
+    "prefix": "docker.io",
+    "aliases": [
+      "registry-1.docker.io"
+    ],
+    "label": "Docker Hub",
+    "gallery": "https://hub.docker.com/"
+  },
+  {
+    "name": "ghcr",
+    "prefix": "ghcr.io",
+    "label": "GitHub Package Registry"
+  },
+  {
+    "name": "quay",
+    "prefix": "quay.io",
+    "label": "Red Hat Quay",
+    "gallery": "https://quay.io/search"
+  },
+  {
+    "name": "nvcr",
+    "prefix": "nvcr.io",
+    "label": "NVIDIA GPU Cloud Container Registry"
+  },
+  {
+    "name": "k8s",
+    "prefix": "registry.k8s.io",
+    "label": "Kubernetes Container Registry"
+  },
+  {
+    "name": "k8s-gcr",
+    "prefix": "k8s.gcr.io",
+    "label": "Kubernetes Container Registry (legacy)"
+  },
+  {
+    "name": "gcr",
+    "prefix": "gcr.io",
+    "label": "Google Container Registry"
+  },
+  {
+    "name": "ecr",
+    "prefix": "public.ecr.aws",
+    "label": "Amazon Elastic Container Registry Public",
+    "gallery": "https://gallery.ecr.aws/"
+  },
+  {
+    "name": "mcr",
+    "prefix": "mcr.microsoft.com",
+    "label": "Microsoft Container Registry",
+    "gallery": "https://mcr.microsoft.com/"
+  },
+  {
+    "name": "mcr",
+    "prefix": "mcr.microsoft.com",
+    "label": "Microsoft Container Registry",
+    "gallery": "https://mcr.microsoft.com/"
+  },
+  {
+    "name": "elastic",
+    "prefix": "docker.elastic.co",
+    "label": "Elastic Docker registry",
+    "gallery": "https://www.docker.elastic.co/"
+  },
+  {
+    "name": "l5d",
+    "prefix": "cr.l5d.io",
+    "label": "Linkerd Docker Registry"
+  },
+  {
+    "name": "jujucharms",
+    "prefix": "registry.jujucharms.com",
+    "label": "Canonical Juju Charmhub"
+  },
+  {
+    "name": "rocks-canonical",
+    "prefix": "rocks.canonical.com",
+    "label": "Canonical Internal Registry"
+  }
+]
