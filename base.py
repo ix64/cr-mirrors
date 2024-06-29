@@ -86,6 +86,7 @@ class ComposeGenerator:
             "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
             "command": [
                 "--log.level=DEBUG",
+                "--accessLog=True",
                 "--providers.docker.exposedByDefault=false",
                 f"--entryPoints.http.address=:{self.http_port}",
                 "--entryPoints.http.asDefault=true",
@@ -184,35 +185,30 @@ class ComposeGenerator:
 
     def _configure_cache_service(self, name: str, upstream: str):
 
-        hostname = f"{name}.registry.internal"
         port = 5000
-
-        config = {
-            "version": "0.1",
-            "http": {"addr": f"0.0.0.0:{port}"},
-            "storage": {"filesystem": {"rootdirectory": "/var/lib/registry"}},
-            "proxy": {"remoteurl": f"https://{upstream}"},
-        }
-
-        conf_path = f"./config/registry/{name}.yaml"
-        self._extra_files[conf_path] = yaml.dump(config)
+        hostname = f"{name}.registry.internal"
 
         service_name = f"registry-{name}"
+        service_endpoint = f"{hostname}:{port}"
+
+        env = self.extra_env.copy()
+        env["REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY"] = "/var/lib/registry"
+        env["REGISTRY_PROXY_REMOTEURL"] = f"https://{upstream}"
+
+        # TODO: support override registry config
         service_config = {
             "image": self.registry_image,
             "restart": "unless-stopped",
             "hostname": hostname,
-            "environment": self.extra_env.copy(),
+            "environment": env,
             "volumes": [
                 f"./cache/{name}:/var/lib/registry:rw",
-                f"{conf_path}:/etc/distribution/config.yml:ro",
             ],
             "labels": [
                 "traefik.enable=true",
                 f"traefik.http.services.{service_name}.loadBalancer.server.port={port}",
             ],
         }
-        service_endpoint = f"{hostname}:{port}"
         return service_name, service_config, service_endpoint
 
     def _configure_prefix_route(self, svc_name, svc, prefix: str):
