@@ -15,7 +15,7 @@ Pull Through Cache Mirroring for Multiple Container Registries.
   Before:            docker.io/library/hello-world
   After:  docker.m.example.com/library/hello-world
   ```
-- **Addition Prefix Mode**
+- **Prefix Addition Mode**
   ```
   Before:               docker.io/library/hello-world
   After:  m.example.com/docker.io/library/hello-world
@@ -31,7 +31,7 @@ Pull Through Cache Mirroring for Multiple Container Registries.
 ### Setup DNS
 
 - Take `m.example.com` as gateway, `192.0.2.1` as server IP
-- If `Addition Prefix Mode` enabled
+- If `Prefix Addition Mode` enabled
     ```
     m.example.com.      IN    A    192.0.2.1
     ```
