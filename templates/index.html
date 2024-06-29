@@ -1,25 +1,31 @@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>{{ site_title }} - ix64/cr-mirrors</title>
+    <meta name="viewport" content="width=device-width">
+    <meta charset="UTF-8">
     <style>
         code {
-            background-color: rgb(229 231 235);
+            background-color: #e5e7eb;
             padding: 4px 6px 4px 6px;
             border-radius: 3px;
             line-height: 2em;
         }
 
         pre {
-            background-color: rgb(243 244 246);
+            background-color: #f3f4f6;
             padding: 4px;
             border-radius: 3px;
         }
 
         table, th, td {
             padding: 3px;
-            border: 1px solid rgb(148 163 184);
+            border: 1px solid #64748b;
             border-collapse: collapse;
             text-align: start;
+        }
+        th {
+            background-color:#f4f4f5;
         }
 
         table {
@@ -57,6 +63,12 @@
             }
         }
 
+        a {
+            text-decoration: underline;
+            color: #1d4ed8;
+            font-weight: 600;
+        }
+
 
     </style>
 </head>
@@ -80,8 +92,7 @@
                     <pre>
 {
     "registry-mirrors": ["https://{{ docker_domain }}/"]
-}
-                </pre>
+} </pre>
                 </li>
                 <li>
                     Restart docker service: <code>sudo systemctl restart docker.service</code>
@@ -90,8 +101,7 @@
                     Check current config: <code>docker info</code>, and you should see
                     <pre>
  Registry Mirrors:
-  https://{{ docker_domain }}/
-                </pre>
+  https://{{ docker_domain }}/ </pre>
                 </li>
                 <li>
                     Pull images as usual. <code>docker pull ubuntu:latest</code>
@@ -153,14 +163,14 @@
 <footer>
     <p>
         If you wish to set up an internal mirror for your team, please visit our
-        <a href="https://github.com/ix64/cr-mirrors" style="text-decoration: none; color: blue;">Project Home</a>
+        <a href="https://github.com/ix64/cr-mirrors">Project Home</a>
         for more details.
     </p>
 
     <p>
         <b>
             Powered by
-            <a href="https://github.com/ix64/cr-mirrors" style="text-decoration: none; color: blue;">ix64/cr-mirrors</a>
+            <a href="https://github.com/ix64/cr-mirrors">ix64/cr-mirrors</a>
         </b>
     </p>
 </footer>
