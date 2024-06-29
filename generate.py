@@ -43,6 +43,8 @@ class ComposeGenerator:
     traefik_dashboard_port: int | None = None
 
     project_name: str = "mcr"
+    traefik_image: str = "docker.io/library/traefik:3.0"
+    registry_image: str = "docker.io/library/registry:2.8"
 
     _route_index = 0
 
@@ -80,7 +82,7 @@ class ComposeGenerator:
 
         svc = {
             "restart": "unless-stopped",
-            "image": "docker.io/library/traefik:3.0",
+            "image": self.traefik_image,
             "ports": [f"{self.http_port}:{self.http_port}"],
             "labels": [],
             "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
@@ -198,7 +200,7 @@ class ComposeGenerator:
 
         service_name = f"registry-{name}"
         service_config = {
-            "image": "docker.io/library/registry:2.8",
+            "image": self.registry_image,
             "restart": "unless-stopped",
             "hostname": hostname,
             "environment": self.extra_env.copy(),
