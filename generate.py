@@ -153,6 +153,10 @@ class ComposeGenerator:
     def add_custom_registry(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None, ):
         self._add_mapping(name, upstream, domains)
 
+    def add_known_registry_bulk(self, name_list: List[str]):
+        for name in name_list:
+            self.add_known_registry(name, name)
+
     def _add_mapping(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None, ):
 
         svc_name, svc_conf, svc_endpoint = self._configure_cache_service(
@@ -255,7 +259,6 @@ if __name__ == "__main__":
     g.http_port = 8080
     g.traefik_dashboard_port = 8081
 
-    g.add_known_registry("docker", "docker", ["docker.m.example.com", "dockerproxy.example.com"])
-    g.add_known_registry("ghcr", "ghcr")
+    g.add_known_registry_bulk(["docker", "ghcr", "quay", "k8s"])
 
     g.generate("./generated")
