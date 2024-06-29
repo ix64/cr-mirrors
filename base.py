@@ -2,7 +2,7 @@ import dataclasses
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
@@ -17,6 +17,7 @@ class RegistryUpstream:
 
     gallery: Optional[str] = None
     endpoint: Optional[str] = None
+    example_image: Optional[str] = None
 
     def get_prefixes(self):
         if self.prefixes is not None:
@@ -24,7 +25,7 @@ class RegistryUpstream:
         elif self.prefix is not None:
             return [self.prefix]
         else:
-            logging.warning(f"no prefixes for {self.name}")
+            logging.fatal(f"no prefixes for {self.name}")
             return []
 
     def get_endpoint(self):
@@ -41,6 +42,77 @@ def load_known_registries(path: Path | str) -> List[RegistryUpstream]:
         known_registries = json.load(_f)
 
     return [RegistryUpstream(**x) for x in known_registries]
+
+
+class IndexGenerator:
+    domain_usages: List[Tuple[str, str, str]] = []
+    prefix_usages: List[Tuple[str, str, str]] = []
+    docker_domain: Optional[str] = None
+
+    _docker_prefix_extra = [
+        ("nginx:latest", "%s/docker.io/library/nginx:latest"),
+        ("grafana/grafana:latest", "%s/docker.io/library/nginx:latest"),
+    ]
+    _docker_domain_extra = [
+        ("nginx:latest", "%s/library/nginx:latest"),
+        ("grafana/grafana:latest", "%s/library/nginx:latest"),
+    ]
+
+    def __init__(self, gateway: str):
+        self.gateway = gateway
+
+    def add_prefix_usage(self, upstream: RegistryUpstream):
+        example_image = "foo/bar:latest" if upstream.example_image is None else upstream.example_image
+
+        if upstream.name == "docker":
+            for (src, dst) in self._docker_prefix_extra:
+                self.prefix_usages.append((
+                    upstream.label,
+                    src,
+                    dst % self.gateway,
+                ))
+
+        for prefix in upstream.get_prefixes():
+            self.prefix_usages.append((
+                upstream.label,
+                f"{prefix}/{example_image}",
+                f"{self.gateway}/{prefix}/{example_image}",
+            ))
+
+    def add_domain_usage(self, domain: str, upstream: RegistryUpstream):
+        example_image = "foo/bar:latest" if upstream.example_image is None else upstream.example_image
+
+        if upstream.name == "docker":
+            self.docker_domain = domain
+            for (src, dst) in self._docker_domain_extra:
+                self.domain_usages.append((
+                    upstream.label,
+                    src,
+                    dst % domain,
+                ))
+
+        for prefix in upstream.get_prefixes():
+            self.domain_usages.append((
+                upstream.label,
+                f"{prefix}/{example_image}",
+                f"{domain}/{example_image}",
+            ))
+
+    def generate(self):
+        from jinja2 import Environment, FileSystemLoader, select_autoescape
+
+        env = Environment(
+            loader=FileSystemLoader("templates"),
+            autoescape=select_autoescape()
+        )
+
+        template = env.get_template("index.html")
+        ret = template.render(
+            docker_domain=self.docker_domain,
+            prefix_usages=self.prefix_usages,
+            domain_usages=self.domain_usages,
+        )
+        return ret
 
 
 class ComposeGenerator:
@@ -66,16 +138,18 @@ class ComposeGenerator:
 
     trust_proxies: List[str] = []
 
-    _route_index = 0
-
-    _compose = {"services": {}}
-    _extra_files: Dict[str, str] = {}
-
     gateway: str
+
     _known_registries: Dict[str, RegistryUpstream] = []
+
+    _route_index = 0
+    _compose = {"services": {}}
+
+    _extra_files: Dict[str, str] = {}
 
     def __init__(self, gateway: str) -> None:
         self.gateway = gateway
+        self._usage_generator = IndexGenerator(gateway)
 
         known_registries_path = Path("./known_registries.json")
         if known_registries_path.exists():
@@ -83,6 +157,12 @@ class ComposeGenerator:
             self._known_registries = {x.name: x for x in registries}
 
     def generate(self, root_dir: Path | str):
+        try:
+            index_html = self._usage_generator.generate()
+            self._extra_files["static/index.html"] = index_html
+        except Exception as e:
+            logging.warning("render index page failed: %s", e)
+
         self._setup_gateway()
 
         self._compose["name"] = self.project_name
@@ -179,32 +259,31 @@ class ComposeGenerator:
 
         self._add_mapping(name, upstream, domains)
 
-    def add_custom_registry(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None, ):
+    def add_custom_registry(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None):
         self._add_mapping(name, upstream, domains)
 
     def add_known_registry_bulk(self, name_list: List[str]):
         for name in name_list:
             self.add_known_registry(name, name)
 
-    def _add_mapping(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None, ):
+    def _add_mapping(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None):
 
         svc_name, svc_conf, svc_endpoint = self._configure_cache_service(
             name, upstream
         )
 
         if self.prefix_mode:
-
+            self._usage_generator.add_prefix_usage(upstream)
             for prefix in upstream.get_prefixes():
                 svc_conf = self._configure_prefix_route(svc_name, svc_conf, prefix)
 
         if self.domain_mode:
             if domains is None:
-                svc_conf = self._configure_domain_route(
-                    svc_name, svc_conf, f"{name}.{self.gateway}"
-                )
-            else:
-                for d in domains:
-                    svc_conf = self._configure_domain_route(svc_name, svc_conf, d)
+                domains = [f"{name}.{self.gateway}"]
+
+            for d in domains:
+                svc_conf = self._configure_domain_route(svc_name, svc_conf, d)
+                self._usage_generator.add_domain_usage(d, upstream)
 
         self._compose["services"][svc_name] = svc_conf
 

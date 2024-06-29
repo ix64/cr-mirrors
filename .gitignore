@@ -1,5 +1,7 @@
 .idea/
+
 cache/
+static/
 
 /generate.py
 /compose.yaml

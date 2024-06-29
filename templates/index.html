@@ -1,0 +1,168 @@
+<html lang="en">
+<head>
+    <title>Container Registry Mirrors - ix64/cr-mirrors</title>
+    <style>
+        code {
+            background-color: rgb(229 231 235);
+            padding: 4px 6px 4px 6px;
+            border-radius: 3px;
+            line-height: 2em;
+        }
+
+        pre {
+            background-color: rgb(243 244 246);
+            padding: 4px;
+            border-radius: 3px;
+        }
+
+        table, th, td {
+            padding: 3px;
+            border: 1px solid rgb(148 163 184);
+            border-collapse: collapse;
+            text-align: start;
+        }
+
+        table {
+            table-layout: auto;
+            width: 100%;
+        }
+
+        section {
+            padding: 0.5em 0 0.5em 0;
+        }
+
+
+        main, footer {
+            padding: 1em;
+        }
+
+        .container {
+            margin: 0 auto 0 auto;
+            width: 100%;
+
+            @media screen and (min-width: 768px) {
+                max-width: 768px;
+            }
+
+            @media screen and (min-width: 1024px) {
+                max-width: 1024px;
+            }
+
+            @media screen and (min-width: 1280px) {
+                max-width: 1280px;
+            }
+
+            @media screen and (min-width: 1536px) {
+                max-width: 1536px;
+            }
+        }
+
+
+    </style>
+</head>
+<body class="container">
+<main>
+    <h1>Container Registry Mirrors</h1>
+    <hr/>
+
+    {% if docker_domain is not none %}
+        <section>
+            <h2>Usage: Change Docker Daemon</h2>
+            <ul>
+                <li>
+                    <b>ONLY</b> works with images in <b>Docker Hub</b>.
+                </li>
+            </ul>
+            <ol>
+                <li>
+                    Add the following content into
+                    <code>/etc/docker/daemon.json</code>
+                    <pre>
+{
+    "registry-mirrors": ["https://{{ docker_domain }}/"]
+}
+                </pre>
+                </li>
+                <li>
+                    Restart docker service: <code>sudo systemctl restart docker.service</code>
+                </li>
+                <li>
+                    Check current config: <code>docker info</code>, and you should see
+                    <pre>
+ Registry Mirrors:
+  https://{{ docker_domain }}/
+                </pre>
+                </li>
+                <li>
+                    Pull images as usual. <code>docker pull ubuntu:latest</code>
+                </li>
+            </ol>
+        </section>
+    {% endif %}
+
+    {% if domain_usages | length > 0 %}
+        <section>
+            <h2>Usage: Domain Replacement Mode</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Registry</th>
+                    <th>Original</th>
+                    <th>Replace With</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for (name,src,dst) in domain_usages %}
+                    <tr>
+                        <th>{{ name }}</th>
+                        <td>{{ src }}</td>
+                        <td>{{ dst }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+
+    {% if prefix_usages | length > 0 %}
+        <section>
+
+            <h2>Usage: Addition Prefix Mode</h2>
+            <table>
+                <thead>
+                <tr>
+                    <th>Registry</th>
+                    <th>Original</th>
+                    <th>Replace With</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for (name,src,dst) in prefix_usages %}
+                    <tr>
+                        <th>{{ name }}</th>
+                        <td>{{ src }}</td>
+                        <td>{{ dst }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    {% endif %}
+</main>
+<hr/>
+<footer>
+    <p>
+        If you wish to set up an internal mirror for your team, please visit our
+        <a href="https://github.com/ix64/cr-mirrors" style="text-decoration: none; color: blue;">Project Home</a>
+        for more details.
+    </p>
+
+    <p>
+        <b>
+            Powered by
+            <a href="https://github.com/ix64/cr-mirrors" style="text-decoration: none; color: blue;">ix64/cr-mirrors</a>
+        </b>
+    </p>
+</footer>
+</body>
+</html>

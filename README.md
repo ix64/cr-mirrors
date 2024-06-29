@@ -5,11 +5,11 @@ Pull Through Cache Mirroring for Multiple Container Registries.
 ## Highlights
 
 - **Multiple Upstream**: Easily configure and manage cache mirrors for various container registries, including
-  - Docker Hub
-  - GitHub Package Registry
-  - Red Hat Quay
-  - Kubernetes Container Registry
-  - ...
+    - Docker Hub
+    - GitHub Package Registry
+    - Red Hat Quay
+    - Kubernetes Container Registry
+    - ...
 - **Domain Replacement Mode**
   ```
   Before:            docker.io/library/hello-world
@@ -20,14 +20,16 @@ Pull Through Cache Mirroring for Multiple Container Registries.
   Before:               docker.io/library/hello-world
   After:  m.example.com/docker.io/library/hello-world
   ```
-- **Flexible Configuration**: 
+- **Flexible Configuration**
 
 ## In Progress
+
 - Automatic TLS
 
 ## Get Started
 
 ### Setup DNS
+
 - Take `m.example.com` as gateway, `192.0.2.1` as server IP
 - If `Addition Prefix Mode` enabled
     ```
@@ -38,17 +40,17 @@ Pull Through Cache Mirroring for Multiple Container Registries.
     *.m.example.com.    IN    A    192.0.2.1
     ```
 
-
 ### Setup dependencies
 
 1. Python3
-   - PyYAML
+    - PyYAML
+    - Jinja2
 2. Docker
-   - Docker Compose
+    - Docker Compose
 
 ```bash
 # Example for Debian 12
-sudo apt install curl python3 python3-yaml
+sudo apt install curl python3 python3-yaml python3-jinja2
 curl -fsSL https://get.docker.com | sudo sh
 ```
 
