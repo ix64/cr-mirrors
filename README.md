@@ -10,8 +10,16 @@ Pull Through Cache Mirroring for Multiple Container Registries.
   - Red Hat Quay
   - Kubernetes Container Registry
   - ...
-- **Domain Replacement Mode**: `docker.io/library/hello-world` -> `docker.example.com/library/hello-world`
-- **Addition Prefix Mode**: `docker.io/library/hello-world` -> `example.com/docker.io/library/hello-world`
+- **Domain Replacement Mode**
+  ```
+  Before:            docker.io/library/hello-world
+  After:  docker.m.example.com/library/hello-world
+  ```
+- **Addition Prefix Mode**
+  ```
+  Before:               docker.io/library/hello-world
+  After:  m.example.com/docker.io/library/hello-world
+  ```
 - **Flexible Configuration**: 
 
 ## In Progress
