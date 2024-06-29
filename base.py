@@ -1,5 +1,6 @@
 import dataclasses
 import json
+import logging
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -9,11 +10,30 @@ import yaml
 @dataclasses.dataclass
 class RegistryUpstream:
     name: str
-    prefix: str
     label: str
 
-    aliases: Optional[List[str]] = None
+    prefix: Optional[str] = None
+    prefixes: Optional[List[str]] = None
+
     gallery: Optional[str] = None
+    endpoint: Optional[str] = None
+
+    def get_prefixes(self):
+        if self.prefixes is not None:
+            return self.prefixes
+        elif self.prefix is not None:
+            return [self.prefix]
+        else:
+            logging.warning(f"no prefixes for {self.name}")
+            return []
+
+    def get_endpoint(self):
+        if self.endpoint is not None:
+            return self.endpoint
+        elif self.prefix is not None:
+            return f"https://{self.prefix}"
+        else:
+            logging.fatal(f"no endpoint for {self.name}")
 
 
 def load_known_registries(path: Path | str) -> List[RegistryUpstream]:
@@ -161,16 +181,13 @@ class ComposeGenerator:
     def _add_mapping(self, name: str, upstream: RegistryUpstream, domains: Optional[List[str]] = None, ):
 
         svc_name, svc_conf, svc_endpoint = self._configure_cache_service(
-            name, upstream.prefix
+            name, upstream
         )
 
         if self.prefix_mode:
-            svc_conf = self._configure_prefix_route(
-                svc_name, svc_conf, upstream.prefix
-            )
-            if upstream.aliases is not None:
-                for alias in upstream.aliases:
-                    svc_conf = self._configure_prefix_route(svc_name, svc_conf, alias)
+
+            for prefix in upstream.get_prefixes():
+                svc_conf = self._configure_prefix_route(svc_name, svc_conf, prefix)
 
         if self.domain_mode:
             if domains is None:
@@ -183,7 +200,7 @@ class ComposeGenerator:
 
         self._compose["services"][svc_name] = svc_conf
 
-    def _configure_cache_service(self, name: str, upstream: str):
+    def _configure_cache_service(self, name: str, upstream: RegistryUpstream):
 
         port = 5000
         hostname = f"{name}.registry.internal"
@@ -193,7 +210,7 @@ class ComposeGenerator:
 
         env = self.extra_env.copy()
         env["REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY"] = "/var/lib/registry"
-        env["REGISTRY_PROXY_REMOTEURL"] = f"https://{upstream}"
+        env["REGISTRY_PROXY_REMOTEURL"] = upstream.get_endpoint()
 
         # TODO: support override registry config
         service_config = {

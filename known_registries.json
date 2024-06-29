@@ -1,10 +1,11 @@
 [
   {
     "name": "docker",
-    "prefix": "docker.io",
-    "aliases": [
-      "registry-1.docker.io"
+    "prefixes": [
+      "registry-1.docker.io",
+      "docker.io"
     ],
+    "endpoint": "https://registry-1.docker.io",
     "label": "Docker Hub",
     "gallery": "https://hub.docker.com/"
   },
