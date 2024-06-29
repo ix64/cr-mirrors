@@ -215,11 +215,13 @@ class ComposeGenerator:
         return service_name, service_config, service_endpoint
 
     def _configure_prefix_route(self, svc_name, svc, prefix: str):
-
+        route_name = f"{svc_name}-{self._route_index}"
         labels = [
-            f"traefik.http.routers.{svc_name}-{self._route_index}.rule=" +
+            f"traefik.http.middlewares.{route_name}.stripPrefix.prefixes=/{prefix}",
+            f"traefik.http.routers.{route_name}.rule=" +
             f"Host(`{self.gateway}`) && PathPrefix(`/{prefix}`)",
-            f"traefik.http.routers.{svc_name}-{self._route_index}.service={svc_name}",
+            f"traefik.http.routers.{route_name}.service={svc_name}",
+            f"traefik.http.routers.{route_name}.middlewares={route_name}",
         ]
         self._route_index += 1
 
@@ -236,5 +238,3 @@ class ComposeGenerator:
 
         svc["labels"] += labels
         return svc
-
-
