@@ -52,11 +52,11 @@ class IndexGenerator:
 
     _docker_prefix_extra = [
         ("nginx:latest", "%s/docker.io/library/nginx:latest"),
-        ("grafana/grafana:latest", "%s/docker.io/library/nginx:latest"),
+        ("grafana/grafana:latest", "%s/docker.io/grafana/grafana:latest"),
     ]
     _docker_domain_extra = [
         ("nginx:latest", "%s/library/nginx:latest"),
-        ("grafana/grafana:latest", "%s/library/nginx:latest"),
+        ("grafana/grafana:latest", "%s/grafana/grafana:latest"),
     ]
 
     def __init__(self, gateway: str):
