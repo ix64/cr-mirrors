@@ -64,6 +64,8 @@ class ComposeGenerator:
     traefik_image: str = "docker.io/library/traefik:3.0"
     registry_image: str = "docker.io/library/registry:2.8"
 
+    trust_proxies: List[str] = []
+
     _route_index = 0
 
     _compose = {"services": {}}
@@ -113,12 +115,18 @@ class ComposeGenerator:
             ],
         }
 
+        if len(self.trust_proxies) != 0:
+            svc["command"] += ["--entryPoints.http.forwardedHeaders.trustedIPs=" + "".join(self.trust_proxies)]
+
         if self.https_port is not None:
             svc["ports"] += [f"{self.https_port}:{self.https_port}"]
             svc["command"] += [
                 f"--entryPoints.https.address=:{self.https_port}"
                 "--entryPoints.https.asDefault=true",
             ]
+            if len(self.trust_proxies) != 0:
+                svc["command"] += ["--entryPoints.http.forwardedHeaders.trustedIPs=" + "".join(self.trust_proxies)]
+
             raise NotImplemented("TODO: Setup TLS Cert")
 
         if self.traefik_dashboard_port is not None:
@@ -231,11 +239,12 @@ class ComposeGenerator:
     def _configure_prefix_route(self, svc_name, svc, prefix: str):
         route_name = f"{svc_name}-{self._route_index}"
         labels = [
-            f"traefik.http.middlewares.{route_name}.stripPrefix.prefixes=/{prefix}",
+            f"traefik.http.middlewares.{route_name}-strip.stripPrefix.prefixes=/v2/{prefix}",
+            f"traefik.http.middlewares.{route_name}-add.addPrefix.prefix=/v2",
             f"traefik.http.routers.{route_name}.rule=" +
-            f"Host(`{self.gateway}`) && PathPrefix(`/{prefix}`)",
+            f"Host(`{self.gateway}`) && PathPrefix(`/v2/{prefix}/`)",
             f"traefik.http.routers.{route_name}.service={svc_name}",
-            f"traefik.http.routers.{route_name}.middlewares={route_name}",
+            f"traefik.http.routers.{route_name}.middlewares={route_name}-strip,{route_name}-add",
         ]
         self._route_index += 1
 
