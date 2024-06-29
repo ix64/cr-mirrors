@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 import yaml
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 
 @dataclasses.dataclass
@@ -98,9 +99,7 @@ class IndexGenerator:
                 f"{domain}/{example_image}",
             ))
 
-    def generate(self):
-        from jinja2 import Environment, FileSystemLoader, select_autoescape
-
+    def generate(self, title):
         env = Environment(
             loader=FileSystemLoader("templates"),
             autoescape=select_autoescape()
@@ -108,6 +107,7 @@ class IndexGenerator:
 
         template = env.get_template("index.html")
         ret = template.render(
+            site_title=title,
             docker_domain=self.docker_domain,
             prefix_usages=self.prefix_usages,
             domain_usages=self.domain_usages,
@@ -127,6 +127,8 @@ class ComposeGenerator:
     # e.g. docker.io/library/alpine -> docker.m.example.com/library/alpine
     domain_mode = True
 
+    site_title = "Container Registry Mirrors"
+
     http_port: int = 80
     https_port: int | None = None
     traefik_dashboard_domain: str | None = None
@@ -135,6 +137,7 @@ class ComposeGenerator:
     project_name: str = "mcr"
     traefik_image: str = "docker.io/library/traefik:3.0"
     registry_image: str = "docker.io/library/registry:2.8"
+    nginx_image: str = "docker.io/library/nginx:1.27"
 
     trust_proxies: List[str] = []
 
@@ -157,12 +160,7 @@ class ComposeGenerator:
             self._known_registries = {x.name: x for x in registries}
 
     def generate(self, root_dir: Path | str):
-        try:
-            index_html = self._usage_generator.generate()
-            self._extra_files["static/index.html"] = index_html
-        except Exception as e:
-            logging.warning("render index page failed: %s", e)
-
+        self._generate_index()
         self._setup_gateway()
 
         self._compose["name"] = self.project_name
@@ -241,10 +239,33 @@ class ComposeGenerator:
                 f"traefik.http.routers.{name}.service=api@internal",
                 f"traefik.http.routers.{name}.rule=" +
                 f"Host(`{self.traefik_dashboard_domain}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))",
-                f"traefik.http.routers.{name}.entrypoints=http",
             ]
 
         self._compose["services"]["gateway"] = svc
+
+    def _generate_index(self):
+        try:
+            index_html = self._usage_generator.generate(self.site_title)
+            self._extra_files["static/index.html"] = index_html
+        except Exception as e:
+            logging.warning("render index page failed: %s", e)
+            return
+
+        service_name = "nginx-static"
+        service_config = {
+            "image": self.nginx_image,
+            "restart": "unless-stopped",
+            "volumes": [
+                f"./static:/usr/share/nginx/html:ro",
+            ],
+            "labels": [
+                "traefik.enable=true",
+                f"traefik.http.services.{service_name}.loadBalancer.server.port=80",
+                f"traefik.http.routers.{service_name}.rule=Host(`{self.gateway}`)",
+                f"traefik.http.routers.{service_name}.service={service_name}",
+            ],
+        }
+        self._compose["services"][service_name] = service_config
 
     def add_known_registry(
             self,
@@ -297,6 +318,7 @@ class ComposeGenerator:
 
         env = self.extra_env.copy()
         env["REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY"] = "/var/lib/registry"
+        env["REGISTRY_HTTP_ADDR"] = f":{port}"
         env["REGISTRY_PROXY_REMOTEURL"] = upstream.get_endpoint()
 
         # TODO: support override registry config
