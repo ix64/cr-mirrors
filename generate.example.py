@@ -25,4 +25,4 @@ if __name__ == "__main__":
 
     g.add_known_registry_bulk(["docker", "ghcr", "quay", "k8s"])
 
-    g.generate("./generated")
+    g.generate(".")
