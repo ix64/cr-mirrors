@@ -53,12 +53,6 @@
     "gallery": "https://mcr.microsoft.com/"
   },
   {
-    "name": "mcr",
-    "prefix": "mcr.microsoft.com",
-    "label": "Microsoft Container Registry",
-    "gallery": "https://mcr.microsoft.com/"
-  },
-  {
     "name": "elastic",
     "prefix": "docker.elastic.co",
     "label": "Elastic Docker registry",
