@@ -134,6 +134,8 @@ class ComposeGenerator:
     traefik_dashboard_domain: str | None = None
     traefik_dashboard_port: int | None = None
 
+    redirect_explict_https: bool = False
+
     project_name: str = "mcr"
     traefik_image: str = "docker.io/library/traefik:3.0"
     registry_image: str = "docker.io/library/registry:2.8"
@@ -353,10 +355,17 @@ class ComposeGenerator:
         return svc
 
     def _configure_domain_route(self, svc_name, svc, domain: str):
-
+        route_name = f"{svc_name}-{self._route_index}"
         labels = [
-            f"traefik.http.routers.{svc_name}-{self._route_index}.rule=Host(`{domain}`)",
-            f"traefik.http.routers.{svc_name}-{self._route_index}.service={svc_name}",
+            f"traefik.http.middlewares.{route_name}-redir-home.redirectregex.regex=^(\w+)://{domain}/$",
+            (
+                f"traefik.http.middlewares.{route_name}-redir-home.redirectregex.replacement=https://{self.gateway}/"
+                if self.redirect_explict_https
+                else f"traefik.http.middlewares.{route_name}-redir-home.redirectregex.replacement=$${1}://{self.gateway}/"
+            ),
+            f"traefik.http.routers.{route_name}.rule=Host(`{domain}`)",
+            f"traefik.http.routers.{route_name}.service={svc_name}",
+            f"traefik.http.routers.{route_name}.middlewares={route_name}-redir-home",
         ]
         self._route_index += 1
 
