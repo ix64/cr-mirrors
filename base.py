@@ -144,6 +144,7 @@ class ComposeGenerator:
     trust_proxies: List[str] = []
 
     gateway: str
+    metrics_domain: str
 
     _known_registries: Dict[str, RegistryUpstream] = []
 
@@ -187,7 +188,6 @@ class ComposeGenerator:
             "labels": [],
             "volumes": ["/var/run/docker.sock:/var/run/docker.sock"],
             "command": [
-                "--log.level=DEBUG",
                 "--accessLog=True",
                 "--providers.docker.exposedByDefault=false",
                 f"--entryPoints.http.address=:{self.http_port}",
@@ -323,6 +323,27 @@ class ComposeGenerator:
         env["REGISTRY_HTTP_ADDR"] = f":{port}"
         env["REGISTRY_PROXY_REMOTEURL"] = upstream.get_endpoint()
 
+        labels = [
+            "traefik.enable=true",
+            f"traefik.http.services.{service_name}.loadBalancer.server.port={port}",
+        ]
+
+        if self.metrics_domain is not None:
+            metrics_port = 5001
+            env["REGISTRY_HTTP_DEBUG_PROMETHEUS_ENABLED"] = "true"
+            env["REGISTRY_HTTP_DEBUG_ADDR"] = f"0.0.0.0:{metrics_port}"
+
+            debug_service_name = f"{service_name}-debug"
+            route_name = f"{service_name}-{self._route_index}"
+            labels += [
+                f"traefik.http.services.{debug_service_name}.loadBalancer.server.port={metrics_port}",
+                f"traefik.http.middlewares.{route_name}-strip.stripPrefix.prefixes=/{name}",
+                f"traefik.http.routers.{route_name}.rule=Host(`{self.metrics_domain}`) && PathPrefix(`/{name}/`)",
+                f"traefik.http.routers.{route_name}.service={debug_service_name}",
+                f"traefik.http.routers.{route_name}.middlewares={route_name}-strip",
+            ]
+            self._route_index += 1
+
         # TODO: support override registry config
         service_config = {
             "image": self.registry_image,
@@ -332,11 +353,9 @@ class ComposeGenerator:
             "volumes": [
                 f"./cache/{name}:/var/lib/registry:rw",
             ],
-            "labels": [
-                "traefik.enable=true",
-                f"traefik.http.services.{service_name}.loadBalancer.server.port={port}",
-            ],
+            "labels": labels,
         }
+
         return service_name, service_config, service_endpoint
 
     def _configure_prefix_route(self, svc_name, svc, prefix: str):
