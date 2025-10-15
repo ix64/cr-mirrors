@@ -22,7 +22,8 @@ if __name__ == "__main__":
 
     g.http_port = 8080
     g.traefik_dashboard_port = 8081
+    g.redirect_explict_https = True
 
+    # configure registry & generate docker compose file
     g.add_known_registry_bulk(["docker", "ghcr", "quay", "k8s"])
-
     g.generate(".")

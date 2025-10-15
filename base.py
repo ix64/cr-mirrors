@@ -137,9 +137,9 @@ class ComposeGenerator:
     redirect_explict_https: bool = False
 
     project_name: str = "mcr"
-    traefik_image: str = "docker.io/library/traefik:3.0"
-    registry_image: str = "docker.io/library/registry:2.8"
-    nginx_image: str = "docker.io/library/nginx:1.27"
+    traefik_image: str = "docker.io/library/traefik:3.5"
+    registry_image: str = "docker.io/library/registry:3.0"
+    nginx_image: str = "docker.io/library/nginx:1.29"
 
     trust_proxies: List[str] = []
 
