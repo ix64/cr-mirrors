@@ -144,7 +144,7 @@ class ComposeGenerator:
     trust_proxies: List[str] = []
 
     gateway: str
-    metrics_domain: str
+    metrics_domain: str | None = None
 
     _known_registries: Dict[str, RegistryUpstream] = []
 
